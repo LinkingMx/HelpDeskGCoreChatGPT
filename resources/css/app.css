@@ -9,3 +9,9 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Stack table rows on mobile */
+@media (max-width: 640px) {
+  .fi-ta-table tbody tr { @apply flex flex-col !important; }
+  .fi-ta-table td { @apply w-full !important; }
+}
