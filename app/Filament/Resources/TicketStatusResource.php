@@ -23,6 +23,8 @@ class TicketStatusResource extends Resource
     
     // Custom navigation label "Statuses" instead of "Ticket Statuses"
     protected static ?string $navigationLabel = 'Estatus de tickets';
+    protected static ?string $label = 'Estatus de ticket';
+    protected static ?string $pluralLabel = 'Estatus de tickets';
 
     /**
      * Check if the current user can access this resource
@@ -42,11 +44,13 @@ class TicketStatusResource extends Resource
             ->schema([
                 // Name field - required, with maximum length of 40 characters
                 Forms\Components\TextInput::make('name')
+                    ->label('Estatus')
                     ->required()
                     ->maxLength(40),
                 
                 // Color picker for status color with default blue value
                 Forms\Components\ColorPicker::make('badge_color')
+                    ->label('Color')
                     ->required()
                     ->default('#3b82f6'),
             ])
@@ -62,10 +66,12 @@ class TicketStatusResource extends Resource
             ->columns([
                 // ID column, sortable
                 Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
                     ->sortable(),
                 
                 // Name column, searchable
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Estatus')
                     ->searchable(),
                 
                 // Badge column that shows the color visually
@@ -75,9 +81,10 @@ class TicketStatusResource extends Resource
                 
                 // Created at timestamp, sortable and toggleable
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Creado el')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 // No filters specified in the requirements

@@ -24,6 +24,10 @@ class TicketCategoryResource extends Resource
     // Custom navigation label "Categories" instead of "Ticket Categories"
     protected static ?string $navigationLabel = 'Categoria de tickets';
 
+
+    protected static ?string $label = 'Categoria de ticket';
+    protected static ?string $pluralLabel = 'Categorias de tickets';
+
     /**
      * Check if the current user can access this resource
      * Restrict access to super_admin and admin roles
@@ -42,6 +46,7 @@ class TicketCategoryResource extends Resource
             ->schema([
                 // Name field - required
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre de la categoria')
                     ->required()
                     ->maxLength(255),
                 
@@ -61,21 +66,24 @@ class TicketCategoryResource extends Resource
             ->columns([
                 // ID column
                 Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
                     ->sortable(),
                 
                 // Name column
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
                     ->searchable(),
                 
                 // Icon column that displays the actual icon
                 Tables\Columns\IconColumn::make('icon')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->icon(fn ($record): string => $record->icon ?? 'heroicon-o-question-mark-circle'),
                 
                 // Created at timestamp, toggleable
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 // No filters specified in requirements

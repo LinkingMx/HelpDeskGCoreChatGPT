@@ -19,12 +19,11 @@ class ClientResource extends Resource
     protected static ?string $model = Client::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
-    
     protected static ?string $navigationLabel = 'Clientes';
-
     protected static ?string $recordTitleAttribute = 'name';
-
     protected static ?string $navigationGroup = 'Catalogos';
+    protected static ?string $label = 'Cliente';
+    protected static ?string $pluralLabel = 'Clientes';
 
     protected static ?int $navigationSort = 1;
 
@@ -35,17 +34,22 @@ class ClientResource extends Resource
                 Forms\Components\Section::make()
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label('Nombre del cliente')
                             ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('contact_name')
+                            ->label('Nombre del contacto')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('contact_email')
+                            ->label('Email del contacto')
                             ->email()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('contact_phone')
+                            ->label('Teléfono del contacto')
                             ->tel()
                             ->maxLength(255),
                         Forms\Components\MarkdownEditor::make('notes')
+                            ->label('Notas')
                             ->columnSpanFull(),
                     ])
                     ->columns([
@@ -74,7 +78,7 @@ class ClientResource extends Resource
                 
                 Tables\Columns\TextColumn::make('contact_phone')
                     ->label('Teléfono')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\TextColumn::make('tickets_count')
                     ->counts('tickets')
@@ -85,7 +89,7 @@ class ClientResource extends Resource
                     ->label('Registrado')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn (string $state): string => date('d M Y', strtotime($state))),
             ])
             ->filters([

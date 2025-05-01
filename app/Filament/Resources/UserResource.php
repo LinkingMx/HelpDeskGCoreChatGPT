@@ -21,17 +21,21 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'Catalogos';
     protected static ?string $navigationLabel = 'Usuarios';
+    protected static ?string $label = 'Usuario';
+    protected static ?string $pluralLabel = 'Usuarios';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre')
                     ->required()
                     ->maxLength(255)
                     ->columnSpan(1),
                     
                 Forms\Components\TextInput::make('email')
+                    ->label('Email')
                     ->email()
                     ->required()
                     ->maxLength(255)
@@ -39,6 +43,7 @@ class UserResource extends Resource
                     ->columnSpan(1),
                     
                 Forms\Components\TextInput::make('password')
+                    ->label('Contraseña')
                     ->password()
                     ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
                     ->dehydrated(fn ($state) => filled($state))
@@ -47,6 +52,7 @@ class UserResource extends Resource
                     ->columnSpanFull(),
                     
                 Forms\Components\Select::make('roles')
+                    ->label('Roles')
                     ->multiple()
                     ->relationship('roles', 'name')
                     ->preload()
@@ -55,6 +61,7 @@ class UserResource extends Resource
                     ->live(),
                     
                 Forms\Components\Select::make('client_id')
+                    ->label('Cliente')
                     ->relationship('client', 'name')
                     ->required(fn (Forms\Get $get): bool => 
                         collect($get('roles'))->contains(fn ($roleId) => 
@@ -69,6 +76,7 @@ class UserResource extends Resource
                     ->columnSpanFull(),
                     
                 Forms\Components\Select::make('department_id')
+                    ->label('Departamento')
                     ->relationship('department', 'name')
                     ->required(fn (Forms\Get $get): bool => 
                         collect($get('roles'))->contains(fn ($roleId) => 
@@ -90,28 +98,35 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
                     ->searchable(),
                     
                 Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
                     ->searchable(),
                     
                 Tables\Columns\ViewColumn::make('roles')
+                    ->label('Roles')
                     ->view('filament.tables.columns.user-role-badges'),
                     
                 Tables\Columns\TextColumn::make('client.name')
+                    ->label('Cliente')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable()
                     ->toggleable()
                     ->extraAttributes(['class' => 'hidden md:table-cell']),
                     
                 Tables\Columns\TextColumn::make('department.name')
+                    ->label('Departamento')
                     ->toggleable()
                     ->searchable(),
                     
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Creado el')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -122,6 +137,7 @@ class UserResource extends Resource
                     ->multiple(),
                     
                 Tables\Filters\SelectFilter::make('client')
+                    ->label('Cliente')
                     ->relationship('client', 'name'),
                     
                 Tables\Filters\SelectFilter::make('department')

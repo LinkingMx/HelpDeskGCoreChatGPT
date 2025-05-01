@@ -22,10 +22,11 @@ class TicketResource extends Resource
     protected static ?string $model = Ticket::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
-    
-    protected static ?string $navigationLabel = 'Tickets';
-    
     protected static ?string $recordTitleAttribute = 'subject';
+    protected static ?string $navigationLabel = 'Tickets';
+    protected static ?string $label = 'Ticket';
+    protected static ?string $pluralLabel = 'Tickets';
+
     
     protected static ?int $navigationSort = 2;
 
@@ -59,40 +60,47 @@ class TicketResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('client_id')
+                    ->label('Cliente')
                     ->relationship('client', 'name')
                     ->searchable()
                     ->required()
                     ->columnSpan(1),
                     
                 Forms\Components\Select::make('category_id')
+                    ->label('Categoria')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->columnSpan(1),
                     
                 Forms\Components\TextInput::make('subject')
+                    ->label('Asunto')
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull(),
                     
                 Forms\Components\RichEditor::make('description')
+                    ->label('Descripción')
                     ->required()
                     ->columnSpanFull(),
                     
                 Forms\Components\Select::make('priority')
+                    ->label('Prioridad')
                     ->options([
-                        1 => 'High',
-                        2 => 'Medium',
-                        3 => 'Low'
+                        1 => 'Alta',
+                        2 => 'Media',
+                        3 => 'Baja'
                     ])
                     ->default(2)
                     ->columnSpan(1),
                     
                 Forms\Components\Select::make('status_id')
+                    ->label('Estado')
                     ->relationship('status', 'name')
                     ->default($defaultStatus)
                     ->columnSpan(1),
                     
                 Forms\Components\Select::make('agent_id')
+                    ->label('Agente')
                     ->relationship('agent', 'name', function (Builder $query) {
                         return $query->whereHas('roles', function ($query) {
                             $query->where('name', 'agent');

@@ -20,6 +20,10 @@ class DepartmentResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Catalogos';
 
+    protected static ?string $label = 'Departamento';
+    protected static ?string $pluralLabel = 'Departamentos';
+    protected static ?string $navigationLabel = 'Departamentos';
+
     public static function canAccess(): bool
     {
         return auth()->user()->hasAnyRole(['admin', 'super_admin']);
@@ -30,6 +34,7 @@ class DepartmentResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre del departamento')
                     ->required(),
             ]);
     }
@@ -39,6 +44,7 @@ class DepartmentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Departamento')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
