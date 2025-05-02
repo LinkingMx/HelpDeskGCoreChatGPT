@@ -7,6 +7,7 @@ use App\Filament\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
 use App\Models\TicketStatus;
 use App\Models\User;
+use App\Models\TicketCategory; // Add this import
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Resources\Components\Tab;
+use Filament\Forms\Get; // Add this import
+use Filament\Forms\Set; // Add this import
+use Closure; // Add this import
 
 
 class TicketResource extends Resource
@@ -64,12 +68,32 @@ class TicketResource extends Resource
                     ->relationship('client', 'name')
                     ->searchable()
                     ->required()
+                    ->preload()
                     ->columnSpan(1),
                     
+                Forms\Components\Select::make('department_id') // Add department_id Select
+                    ->label('Departamento')
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->required()
+                    ->preload()
+                    ->live() // Use live() instead of reactive() for Filament v3+
+                    ->afterStateUpdated(function (Set $set) { // Use Set for type hinting
+                        $set('category_id', null);
+                        $set('agent_id', null); // Reset agent_id when department changes
+                    })
+                    ->columnSpan(1),
+
                 Forms\Components\Select::make('category_id')
                     ->label('Categoria')
-                    ->relationship('category', 'name')
+                    ->options(fn (Get $get): array => // Use Get for type hinting
+                        TicketCategory::query()
+                            ->where('department_id', $get('department_id'))
+                            ->pluck('name','id')->all())
+                    // ->disablePlaceholderUnlessFilled('department_id') // Remove this line
+                    ->disabled(fn (Get $get): bool => !$get('department_id')) // Add this line to disable the field
                     ->searchable()
+                    ->required() // Make it required
                     ->columnSpan(1),
                     
                 Forms\Components\TextInput::make('subject')
@@ -101,13 +125,21 @@ class TicketResource extends Resource
                     
                 Forms\Components\Select::make('agent_id')
                     ->label('Agente')
-                    ->relationship('agent', 'name', function (Builder $query) {
-                        return $query->whereHas('roles', function ($query) {
-                            $query->where('name', 'agent');
-                        });
+                    ->options(function (Get $get): array { // Use Get for type hinting
+                        $deptId = $get('department_id');
+                        return $deptId
+                            ? User::role('agent')
+                                ->where('department_id', $deptId)
+                                ->pluck('name', 'id')
+                                ->all()
+                            : [];
                     })
+                    ->searchable()
+                    ->disabled(fn (Get $get): bool => !$get('department_id')) // Disable if no department selected
+                    ->placeholder('Seleccione primero un departamento') // Add placeholder
+                    ->live() // Needed for options to update dynamically
                     ->columnSpan(1),
-                    
+
                 Forms\Components\Hidden::make('user_id')
                     ->default(fn () => auth()->id())
             ])

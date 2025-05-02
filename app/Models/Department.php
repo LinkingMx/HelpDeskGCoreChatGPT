@@ -30,4 +30,14 @@ class Department extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    /**
+     * Get the ticket categories for the department.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(TicketCategory::class);
+    }
 }

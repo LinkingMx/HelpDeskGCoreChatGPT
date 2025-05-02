@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TicketCategory extends Model
 {
@@ -18,4 +19,12 @@ class TicketCategory extends Model
         'name',
         'icon',
     ];
+
+    /**
+     * Get the department that owns the category.
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

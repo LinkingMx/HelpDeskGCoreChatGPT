@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TicketCategoryResource\Pages;
 use App\Models\TicketCategory;
+use App\Models\Department; // Add this import
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -49,7 +50,15 @@ class TicketCategoryResource extends Resource
                     ->label('Nombre de la categoria')
                     ->required()
                     ->maxLength(255),
-                
+
+                // Department relationship select - required
+                Forms\Components\Select::make('department_id')
+                    ->label('Departamento')
+                    ->preload() // Preload departments
+                    ->relationship('department', 'name') // Define relationship
+                    ->required() // Make it required
+                    ->searchable(), // Allow searching departments
+
                 // Icon field with placeholder
                 Forms\Components\TextInput::make('icon')
                     ->placeholder('heroicon-o-briefcase')
@@ -73,6 +82,12 @@ class TicketCategoryResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable(),
+
+                // Department name column
+                Tables\Columns\TextColumn::make('department.name')
+                    ->label('Departamento')
+                    ->searchable() // Allow searching by department name
+                    ->sortable(), // Allow sorting by department name
                 
                 // Icon column that displays the actual icon
                 Tables\Columns\IconColumn::make('icon')
