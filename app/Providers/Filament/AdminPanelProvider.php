@@ -25,6 +25,9 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
+            ->brandName('GCore Helpdesk')
+            ->brandLogo(fn () => view('filament.admin.logo'))
+            ->font('Poppins')
             ->id('admin')
             ->path('admin')
             ->login()
