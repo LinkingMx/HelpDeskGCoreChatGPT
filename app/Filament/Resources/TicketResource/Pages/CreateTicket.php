@@ -17,14 +17,12 @@ class CreateTicket extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-    // Add created notification method
     protected function getCreatedNotification(): ?Notification
     {
         return Notification::make()
             ->success()
             ->icon('heroicon-o-check-circle')
             ->title('Ticket Creado')
-            // Assuming the ticket model has a 'subject' attribute
             ->body("El ticket '{$this->record->subject}' ha sido creado exitosamente.");
     }
 }

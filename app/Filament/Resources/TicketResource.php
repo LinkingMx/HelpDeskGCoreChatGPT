@@ -19,6 +19,7 @@ use Filament\Resources\Components\Tab;
 use Filament\Forms\Get; // Add this import
 use Filament\Forms\Set; // Add this import
 use Closure; // Add this import
+use Filament\Forms\Components\Component; // Add this import
 
 
 class TicketResource extends Resource
@@ -116,12 +117,18 @@ class TicketResource extends Resource
                     ])
                     ->default(2)
                     ->columnSpan(1),
-                    
+                     
                 Forms\Components\Select::make('status_id')
                     ->label('Estado')
                     ->relationship('status', 'name')
-                    ->default($defaultStatus)
-                    ->columnSpan(1),
+                    ->default(2)
+                    ->columnSpan(1)
+                    ->disabled(function (string $operation, $record) {
+                        // $operation will be 'create' or 'edit'
+                        // $record will be the current record (null on create)
+                        return $operation === 'create'; // Disable on create only
+                    })
+                    ->dehydrated(true),
                     
                 Forms\Components\Select::make('agent_id')
                     ->label('Agente')
@@ -135,6 +142,7 @@ class TicketResource extends Resource
                             : [];
                     })
                     ->searchable()
+                    ->hiddenOn(['create']) // Hide on create
                     ->disabled(fn (Get $get): bool => !$get('department_id')) // Disable if no department selected
                     ->placeholder('Seleccione primero un departamento') // Add placeholder
                     ->live() // Needed for options to update dynamically
