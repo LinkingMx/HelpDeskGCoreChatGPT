@@ -18,6 +18,16 @@ class TicketCategory extends Model
     protected $fillable = [
         'name',
         'icon',
+        'time',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'time' => 'integer',
     ];
 
     /**

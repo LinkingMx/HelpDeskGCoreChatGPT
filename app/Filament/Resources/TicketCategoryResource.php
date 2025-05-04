@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
+
 class TicketCategoryResource extends Resource
 {
     protected static ?string $model = TicketCategory::class;
@@ -63,6 +64,16 @@ class TicketCategoryResource extends Resource
                 Forms\Components\TextInput::make('icon')
                     ->placeholder('heroicon-o-briefcase')
                     ->maxLength(255),
+                    
+                // SLA time field in hours
+                Forms\Components\TextInput::make('time')
+                    ->numeric()
+                    ->label('SLA (hrs)')
+                    ->minValue(1)
+                    ->maxValue(168)
+                    ->default(24)
+                    ->required()
+                    ->helperText('Max expected time to resolve this kind of ticket'),
             ]);
     }
 
@@ -88,6 +99,12 @@ class TicketCategoryResource extends Resource
                     ->label('Departamento')
                     ->searchable() // Allow searching by department name
                     ->sortable(), // Allow sorting by department name
+                
+                // SLA time column
+                Tables\Columns\TextColumn::make('time')
+                    ->label('SLA h')
+                    ->sortable()
+                    ->toggleable(),
                 
                 // Icon column that displays the actual icon
                 Tables\Columns\IconColumn::make('icon')

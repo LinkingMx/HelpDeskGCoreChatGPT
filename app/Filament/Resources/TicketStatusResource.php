@@ -49,10 +49,10 @@ class TicketStatusResource extends Resource
                     ->maxLength(40),
                 
                 // Color picker for status color with default blue value
-                Forms\Components\ColorPicker::make('badge_color')
+                Forms\Components\TextInput::make('badge_color')
                     ->label('Color')
                     ->required()
-                    ->default('#3b82f6'),
+                    ->default('primary'),
             ])
             ->columns(1); // Single column layout as requested
     }

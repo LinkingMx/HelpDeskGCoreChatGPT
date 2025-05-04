@@ -49,7 +49,7 @@ class ListTickets extends ListRecords
                     $query = TicketResource::getEloquentQuery()->where('status_id', $status->id);
                     return $query->count();
                 })
-                ->badgeColor($tabColor)
+                ->badgeColor('primary') // Cambiar el color del badge
                 ->modifyQueryUsing(function (Builder $query) use ($status) {
                     // Filtrar la consulta por este estado
                     return $query->where('status_id', $status->id);

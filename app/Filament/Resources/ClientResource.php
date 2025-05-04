@@ -19,7 +19,7 @@ class ClientResource extends Resource
     protected static ?string $model = Client::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
-    protected static ?string $navigationLabel = 'Clientes';
+    protected static ?string $navigationLabel = 'Clientes / Areas';
     protected static ?string $recordTitleAttribute = 'name';
     protected static ?string $navigationGroup = 'Catalogos';
     protected static ?string $label = 'Cliente';

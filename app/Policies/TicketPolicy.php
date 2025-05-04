@@ -33,8 +33,8 @@ class TicketPolicy
             return $ticket->agent_id === $user->id || $ticket->department_id === $user->department_id;
         }
 
-        // user: allowed if ticket->user_id == user->id
-        return $ticket->user_id === $user->id;
+        // user: allowed if ticket->user_id == user->id OR ticket->client_id == user->client_id
+        return $ticket->user_id === $user->id || $ticket->client_id === $user->client_id;
     }
 
     /**
@@ -60,8 +60,8 @@ class TicketPolicy
             return $ticket->agent_id === $user->id || $ticket->department_id === $user->department_id;
         }
 
-        // user: allowed if ticket->user_id == user->id
-        return $ticket->user_id === $user->id;
+        // user: allowed if ticket->user_id == user->id OR ticket->client_id == user->client_id
+        return $ticket->user_id === $user->id || $ticket->client_id === $user->client_id;
     }
 
     /**
@@ -69,7 +69,7 @@ class TicketPolicy
      */
     public function delete(User $user, Ticket $ticket): bool
     {
-        // Only admins and super_admins can delete tickets
+        // Only admins, super_admins can delete tickets, regular users cannot
         return $user->hasRole(['super_admin', 'admin']);
     }
 

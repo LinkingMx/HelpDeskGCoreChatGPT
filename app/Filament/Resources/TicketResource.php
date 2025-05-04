@@ -7,7 +7,7 @@ use App\Filament\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
 use App\Models\TicketStatus;
 use App\Models\User;
-use App\Models\TicketCategory; // Add this import
+use App\Models\TicketCategory; 
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -16,10 +16,13 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Resources\Components\Tab;
-use Filament\Forms\Get; // Add this import
-use Filament\Forms\Set; // Add this import
-use Closure; // Add this import
-use Filament\Forms\Components\Component; // Add this import
+use Filament\Forms\Get; 
+use Filament\Forms\Set; 
+use Closure; 
+use Filament\Forms\Components\Component; 
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;  
+use Filament\Tables\Columns\IconColumn;
 
 
 class TicketResource extends Resource
@@ -52,6 +55,11 @@ class TicketResource extends Resource
                 return $query->where('agent_id', $user->id)
                     ->orWhere('department_id', $user->department_id);
             });
+        }
+        
+        // user role: show only tickets for their client
+        if ($user->hasRole('user')) {
+            return $query->where('client_id', $user->client_id);
         }
         
         // regular user: show only their tickets
@@ -129,35 +137,96 @@ class TicketResource extends Resource
                         return $operation === 'create'; // Disable on create only
                     })
                     ->dehydrated(true),
-                    
-                Forms\Components\Select::make('agent_id')
-                    ->label('Agente')
-                    ->options(function (Get $get): array { // Use Get for type hinting
-                        $deptId = $get('department_id');
-                        return $deptId
-                            ? User::role('agent')
-                                ->where('department_id', $deptId)
-                                ->pluck('name', 'id')
-                                ->all()
-                            : [];
-                    })
-                    ->searchable()
-                    ->hiddenOn(['create']) // Hide on create
-                    ->disabled(fn (Get $get): bool => !$get('department_id')) // Disable if no department selected
-                    ->placeholder('Seleccione primero un departamento') // Add placeholder
-                    ->live() // Needed for options to update dynamically
-                    ->columnSpan(1),
 
-                Forms\Components\Hidden::make('user_id')
-                    ->default(fn () => auth()->id())
-            ])
-            ->columns(2);
+                /* … dentro de ->schema([...]) … */
+                Forms\Components\Select::make('agent_id')
+                ->label('Agente')
+                /* ─────────────────────────────────────────────
+                1. Opciones = agentes del mismo departamento
+                ───────────────────────────────────────────── */
+                ->options(function (Get $get): array {
+                    $deptId = $get('department_id');
+
+                    return $deptId
+                        ? User::role('agent')
+                            ->where('department_id', $deptId)
+                            ->pluck('name', 'id')
+                            ->all()
+                        : [];
+                })
+                ->searchable()
+                /* ─────────────────────────────────────────────
+                2. Visibilidad y edición según rol
+                    • super_admin, admin, agent  → visible y editable
+                    • user                       → oculto por completo
+                ───────────────────────────────────────────── */
+                ->visible(fn () => Auth::user()?->hasAnyRole(['super_admin', 'admin', 'agent']))
+                /* Si prefieres que el user lo vea “sólo lectura” en lugar de ocultarlo,
+                cambia la línea anterior por:
+                ->disabled(fn () => Auth::user()?->hasRole('user'))
+                */
+                /* ─────────────────────────────────────────────
+                3. Deshabilitar cuando no hay departamento seleccionado
+                ───────────────────────────────────────────── */
+                ->disabled(fn (Get $get): bool => blank($get('department_id')))
+                ->placeholder('Seleccione primero un departamento')
+                ->live()            // actualiza dinámicamente al cambiar departamento
+                ->columnSpan(1),
+                /* … dentro de ->schema([...]) … */
+                    Forms\Components\Hidden::make('user_id')
+                        ->default(fn () => auth()->id())
+                ])
+                ->columns(2);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
+                IconColumn::make('sla')
+                    ->label('')
+                    /* ─ Icono dinámico ─ */
+                    ->icon(function ($record) {
+                        $completedStates = ['Completado'];   // agrega más si los usas
+
+                        return in_array($record->status->name ?? '', $completedStates, true)
+                            ? 'heroicon-o-check-circle'             // ✔️ cuando está completado
+                            : 'heroicon-o-clock';                   // ⏰ en progreso
+                    })
+                    ->state(fn () => true)                           // siempre renderiza el ícono
+                    /* ─ Color dinámico ─ */
+                    ->color(function ($record) {
+                        $completedStates = ['Completado'];
+
+                        if (in_array($record->status->name ?? '', $completedStates, true)) {
+                            return 'secondary';                       // verde para el check
+                        }
+
+                        $sla      = (int) optional($record->category)->time ?: 24;
+                        $created  = $record->created_at instanceof Carbon
+                            ? $record->created_at
+                            : Carbon::parse($record->created_at);
+                        $elapsed  = max(0, $created->diffInRealHours());
+
+                        return match (true) {
+                            $elapsed < $sla         => 'success',   // verde
+                            $elapsed < $sla * 2     => 'warning',   // amarillo
+                            default                 => 'danger',    // rojo
+                        };
+                    })
+                    ->tooltip(function ($record) {
+                        $sla = (int) optional($record->category)->time ?: 24;
+
+                        $created = $record->created_at instanceof Carbon
+                            ? $record->created_at
+                            : Carbon::parse($record->created_at);
+
+                        $elapsed = max(0, $created->diffInRealHours());
+
+                        return "{$elapsed} / {$sla} h";
+                    })
+                    ->alignCenter(),
+
                 Tables\Columns\TextColumn::make('id')
                     ->label('#')
                     ->sortable(),
@@ -174,10 +243,9 @@ class TicketResource extends Resource
                     ->label('Estado')
                     ->badge()
                     ->color(fn ($record) => match($record->status->name ?? '') {
-                        'Open' => 'primary',
-                        'In Progress' => 'warning',
-                        'Resolved' => 'success',
-                        'Closed' => 'gray',
+                        'Iniciado' => 'primary',
+                        'En Proceso' => 'info',
+                        'Completado' => 'success',
                         default => 'gray',
                     }),
                 
