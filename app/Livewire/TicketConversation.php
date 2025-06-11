@@ -4,9 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Ticket;
 use App\Models\TicketComment;
-use App\Notifications\TicketCommentAdded;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Filament\Notifications\Notification;
 
 class TicketConversation extends Component
 {
@@ -47,26 +47,11 @@ class TicketConversation extends Component
             ]);
         }
 
-        // Notify relevant parties
-        $this->notifyRelevantUsers($comment);
-
         $this->reset('comment', 'attachments');
         $this->ticket->refresh();
     }
 
-    protected function notifyRelevantUsers(TicketComment $comment)
-    {
-        // Notify the ticket opener if the comment is from someone else
-        if ($this->ticket->user_id !== auth()->id()) {
-            $this->ticket->opener->notify(new TicketCommentAdded($comment));
-        }
-
-        // Notify the assigned agent if they exist and aren't the commenter
-        if ($this->ticket->agent_id && $this->ticket->agent_id !== auth()->id()) {
-            $this->ticket->agent->notify(new TicketCommentAdded($comment));
-        }
-    }
-
+    
     public function render()
     {
         return view('livewire.ticket-conversation', [

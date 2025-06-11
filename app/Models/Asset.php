@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Asset extends Model
+{
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'asset_tag',
+        'serial_number',
+        'asset_type_id',
+        'asset_status_id',
+        'assigned_to',
+        'client_id',
+        'purchase_date',
+        'purchase_cost',
+        'warranty_expires_on',
+        'notes',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'purchase_date' => 'date',
+        'warranty_expires_on' => 'date',
+        'purchase_cost' => 'decimal:2',
+    ];
+
+    /**
+     * Get the asset type that owns the asset.
+     */
+    public function assetType(): BelongsTo
+    {
+        return $this->belongsTo(AssetType::class);
+    }
+
+    /**
+     * Get the asset status that owns the asset.
+     */
+    public function assetStatus(): BelongsTo
+    {
+        return $this->belongsTo(AssetStatus::class);
+    }
+
+    /**
+     * Get the client that owns the asset.
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+}
