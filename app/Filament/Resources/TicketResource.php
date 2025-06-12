@@ -3,52 +3,50 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TicketResource\Pages;
-use App\Filament\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\TicketStatus;
 use App\Models\User;
-use App\Models\TicketCategory; 
+use App\Notifications\TicketAlert;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Resources\Components\Tab;
-use Filament\Forms\Get; 
-use Filament\Forms\Set; 
-use Closure; 
-use Filament\Forms\Components\Component; 
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;  
-use Filament\Tables\Columns\IconColumn;
-
 
 class TicketResource extends Resource
 {
     protected static ?string $model = Ticket::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
+
     protected static ?string $recordTitleAttribute = 'subject';
+
     protected static ?string $navigationLabel = 'Tickets';
+
     protected static ?string $label = 'Ticket';
+
     protected static ?string $pluralLabel = 'Tickets';
 
-    
     protected static ?int $navigationSort = 2;
 
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        
+
         $user = auth()->user();
-        
+
         // super_admin & admin: no restrictions
         if ($user->hasRole(['super_admin', 'admin'])) {
             return $query;
         }
-        
+
         // agent: show tickets assigned to them or in their department
         if ($user->hasRole('agent')) {
             return $query->where(function ($query) use ($user) {
@@ -56,12 +54,12 @@ class TicketResource extends Resource
                     ->orWhere('department_id', $user->department_id);
             });
         }
-        
+
         // user role: show only tickets for their client
         if ($user->hasRole('user')) {
             return $query->where('client_id', $user->client_id);
         }
-        
+
         // regular user: show only their tickets
         return $query->where('user_id', $user->id);
     }
@@ -69,7 +67,7 @@ class TicketResource extends Resource
     public static function form(Form $form): Form
     {
         $defaultStatus = TicketStatus::where('name', 'Open')->first()?->id;
-        
+
         return $form
             ->schema([
                 Forms\Components\Select::make('client_id')
@@ -79,7 +77,7 @@ class TicketResource extends Resource
                     ->required()
                     ->preload()
                     ->columnSpan(1),
-                    
+
                 Forms\Components\Select::make('department_id') // Add department_id Select
                     ->label('Departamento')
                     ->relationship('department', 'name')
@@ -98,69 +96,73 @@ class TicketResource extends Resource
                     ->options(fn (Get $get): array => // Use Get for type hinting
                         TicketCategory::query()
                             ->where('department_id', $get('department_id'))
-                            ->pluck('name','id')->all())
+                            ->pluck('name', 'id')->all())
                     // ->disablePlaceholderUnlessFilled('department_id') // Remove this line
-                    ->disabled(fn (Get $get): bool => !$get('department_id')) // Add this line to disable the field
+                    ->disabled(fn (Get $get): bool => ! $get('department_id')) // Add this line to disable the field
                     ->searchable()
                     ->required() // Make it required
                     ->columnSpan(1),
-                    
+
                 Forms\Components\TextInput::make('subject')
                     ->label('Asunto')
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull(),
-                    
+
                 Forms\Components\RichEditor::make('description')
                     ->label('Descripción')
                     ->required()
                     ->columnSpanFull(),
-                    
+
+                Forms\Components\Placeholder::make('status_info')
+                    ->label('Estado')
+                    ->content('El ticket se creará con estado "Iniciado" automáticamente.')
+                    ->visible(fn (string $operation): bool => $operation === 'create')
+                    ->columnSpan(1),
+
                 Forms\Components\Select::make('priority')
                     ->label('Prioridad')
                     ->options([
                         1 => 'Alta',
                         2 => 'Media',
-                        3 => 'Baja'
+                        3 => 'Baja',
                     ])
                     ->default(2)
                     ->columnSpan(1),
-                     
+
                 Forms\Components\Select::make('status_id')
                     ->label('Estado')
                     ->relationship('status', 'name')
-                    ->default(2)
-                    ->columnSpan(1)
-                    ->disabled(function (string $operation, $record) {
-                        // $operation will be 'create' or 'edit'
-                        // $record will be the current record (null on create)
-                        return $operation === 'create'; // Disable on create only
-                    })
-                    ->dehydrated(true),
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->hidden(fn (string $operation): bool => $operation === 'create') // Oculto en creación
+                    ->disabled(fn (): bool => ! auth()->user()->hasRole('agent')) // Solo agentes pueden editarlo
+                    ->columnSpan(1),
 
                 /* … dentro de ->schema([...]) … */
                 Forms\Components\Select::make('agent_id')
-                ->label('Agente')
+                    ->label('Agente')
                 /* ─────────────────────────────────────────────
                 1. Opciones = agentes del mismo departamento
                 ───────────────────────────────────────────── */
-                ->options(function (Get $get): array {
-                    $deptId = $get('department_id');
+                    ->options(function (Get $get): array {
+                        $deptId = $get('department_id');
 
-                    return $deptId
-                        ? User::role('agent')
-                            ->where('department_id', $deptId)
-                            ->pluck('name', 'id')
-                            ->all()
-                        : [];
-                })
-                ->searchable()
+                        return $deptId
+                            ? User::role('agent')
+                                ->where('department_id', $deptId)
+                                ->pluck('name', 'id')
+                                ->all()
+                            : [];
+                    })
+                    ->searchable()
                 /* ─────────────────────────────────────────────
                 2. Visibilidad y edición según rol
                     • super_admin, admin, agent  → visible y editable
                     • user                       → oculto por completo
                 ───────────────────────────────────────────── */
-                ->visible(fn () => Auth::user()?->hasAnyRole(['super_admin', 'admin', 'agent']))
+                    ->visible(fn () => Auth::user()?->hasAnyRole(['super_admin', 'admin', 'agent']))
                 /* Si prefieres que el user lo vea “sólo lectura” en lugar de ocultarlo,
                 cambia la línea anterior por:
                 ->disabled(fn () => Auth::user()?->hasRole('user'))
@@ -168,15 +170,15 @@ class TicketResource extends Resource
                 /* ─────────────────────────────────────────────
                 3. Deshabilitar cuando no hay departamento seleccionado
                 ───────────────────────────────────────────── */
-                ->disabled(fn (Get $get): bool => blank($get('department_id')))
-                ->placeholder('Seleccione primero un departamento')
-                ->live()            // actualiza dinámicamente al cambiar departamento
-                ->columnSpan(1),
+                    ->disabled(fn (Get $get): bool => blank($get('department_id')))
+                    ->placeholder('Seleccione primero un departamento')
+                    ->live()            // actualiza dinámicamente al cambiar departamento
+                    ->columnSpan(1),
                 /* … dentro de ->schema([...]) … */
-                    Forms\Components\Hidden::make('user_id')
-                        ->default(fn () => auth()->id())
-                ])
-                ->columns(2);
+                Forms\Components\Hidden::make('user_id')
+                    ->default(fn () => auth()->id()),
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -202,16 +204,16 @@ class TicketResource extends Resource
                             return 'secondary';                       // verde para el check
                         }
 
-                        $sla      = (int) optional($record->category)->time ?: 24;
-                        $created  = $record->created_at instanceof Carbon
+                        $sla = (int) optional($record->category)->time ?: 24;
+                        $created = $record->created_at instanceof Carbon
                             ? $record->created_at
                             : Carbon::parse($record->created_at);
-                        $elapsed  = max(0, $created->diffInRealHours());
+                        $elapsed = max(0, $created->diffInRealHours());
 
                         return match (true) {
-                            $elapsed < $sla         => 'success',   // verde
-                            $elapsed < $sla * 2     => 'warning',   // amarillo
-                            default                 => 'danger',    // rojo
+                            $elapsed < $sla => 'success',   // verde
+                            $elapsed < $sla * 2 => 'warning',   // amarillo
+                            default => 'danger',    // rojo
                         };
                     })
                     ->tooltip(function ($record) {
@@ -230,7 +232,7 @@ class TicketResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('#')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('subject')
                     ->label('Asunto')
                     ->searchable()
@@ -238,46 +240,47 @@ class TicketResource extends Resource
                     ->tooltip(function ($record) {
                         return $record->subject;
                     }),
-                
+
                 Tables\Columns\TextColumn::make('status.name')
                     ->label('Estado')
                     ->badge()
-                    ->color(fn ($record) => match($record->status->name ?? '') {
+                    ->color(fn ($record) => match ($record->status->name ?? '') {
                         'Iniciado' => 'primary',
                         'En Proceso' => 'info',
                         'Completado' => 'success',
+                        'Cerrado' => 'gray',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('priority')
                     ->label('Prioridad')
                     ->badge()
-                    ->color(fn (int $state): string => match($state) {
+                    ->color(fn (int $state): string => match ($state) {
                         1 => 'danger',
                         2 => 'warning',
                         3 => 'success',
                         default => 'warning',
                     })
-                    ->formatStateUsing(fn (int $state): string => match($state) {
+                    ->formatStateUsing(fn (int $state): string => match ($state) {
                         1 => 'Alta',
                         2 => 'Media',
                         3 => 'Baja',
                         default => 'Media',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('Cliente')
                     ->searchable()
                     ->toggleable(),
-                    
+
                 Tables\Columns\TextColumn::make('department.name')
                     ->label('Departamento')
                     ->toggleable(),
-                    
+
                 Tables\Columns\TextColumn::make('agent.name')
                     ->label('Agente')
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Creado')
                     ->dateTime()
@@ -289,19 +292,19 @@ class TicketResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Estado')
                     ->relationship('status', 'name'),
-                    
+
                 Tables\Filters\SelectFilter::make('priority')
                     ->label('Prioridad')
                     ->options([
                         1 => 'Alta',
                         2 => 'Media',
-                        3 => 'Baja'
+                        3 => 'Baja',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('department')
                     ->label('Departamento')
                     ->relationship('department', 'name'),
-                    
+
                 Tables\Filters\Filter::make('created_at')
                     ->label('Fecha de creación')
                     ->form([
@@ -320,11 +323,79 @@ class TicketResource extends Resource
                                 $data['created_until'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
-                    })
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+
+                // Acción para cerrar ticket
+                Tables\Actions\Action::make('close_ticket')
+                    ->label('Cerrar Ticket')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cerrar Ticket')
+                    ->modalDescription('¿Estás seguro de que quieres cerrar este ticket? Solo tú podrás reabrirlo.')
+                    ->modalSubmitActionLabel('Sí, cerrar ticket')
+                    ->visible(function (Ticket $record): bool {
+                        // Solo visible para el creador del ticket
+                        // Solo si está en estado "Completado"
+                        return auth()->id() === $record->user_id
+                            && $record->status->name === 'Completado';
+                    })
+                    ->action(function (Ticket $record) {
+                        $closedStatus = TicketStatus::where('name', 'Cerrado')->first();
+                        $record->update(['status_id' => $closedStatus->id]);
+
+                        // Notificar al agente asignado
+                        if ($record->agent) {
+                            $record->agent->notify(new TicketAlert(
+                                $record,
+                                'Ticket #'.$record->id.' cerrado',
+                                'El ticket "'.$record->subject.'" ha sido cerrado por el cliente.'
+                            ));
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Ticket cerrado exitosamente')
+                            ->success()
+                            ->send();
+                    }),
+
+                // Acción para reabrir ticket
+                Tables\Actions\Action::make('reopen_ticket')
+                    ->label('Reabrir Ticket')
+                    ->icon('heroicon-o-lock-open')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Reabrir Ticket')
+                    ->modalDescription('¿Estás seguro de que quieres reabrir este ticket?')
+                    ->modalSubmitActionLabel('Sí, reabrir ticket')
+                    ->visible(function (Ticket $record): bool {
+                        // Solo visible para el creador del ticket
+                        // Solo si está en estado "Cerrado"
+                        return auth()->id() === $record->user_id
+                            && $record->status->name === 'Cerrado';
+                    })
+                    ->action(function (Ticket $record) {
+                        $completedStatus = TicketStatus::where('name', 'Completado')->first();
+                        $record->update(['status_id' => $completedStatus->id]);
+
+                        // Notificar al agente asignado
+                        if ($record->agent) {
+                            $record->agent->notify(new TicketAlert(
+                                $record,
+                                'Ticket #'.$record->id.' reabierto',
+                                'El ticket "'.$record->subject.'" ha sido reabierto por el cliente.'
+                            ));
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Ticket reabierto exitosamente')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

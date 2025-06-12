@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\TicketResource\Pages;
 
 use App\Filament\Resources\TicketResource;
+use App\Models\TicketStatus;
+use App\Notifications\TicketAlert;
+use Filament\Actions;
 use Filament\Infolists;
 use Filament\Infolists\Components\Livewire;
 use Filament\Infolists\Components\Section;
@@ -14,6 +17,75 @@ use Filament\Support\Enums\IconPosition;
 class ViewTicket extends ViewRecord
 {
     protected static string $resource = TicketResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\EditAction::make(),
+
+            // Acción para cerrar ticket
+            Actions\Action::make('close_ticket')
+                ->label('Cerrar Ticket')
+                ->icon('heroicon-o-lock-closed')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('Cerrar Ticket')
+                ->modalDescription('¿Estás seguro de que quieres cerrar este ticket? Solo tú podrás reabrirlo.')
+                ->modalSubmitActionLabel('Sí, cerrar ticket')
+                ->visible(function (): bool {
+                    return auth()->id() === $this->record->user_id
+                        && $this->record->status->name === 'Completado';
+                })
+                ->action(function () {
+                    $closedStatus = TicketStatus::where('name', 'Cerrado')->first();
+                    $this->record->update(['status_id' => $closedStatus->id]);
+
+                    if ($this->record->agent) {
+                        $this->record->agent->notify(new TicketAlert(
+                            $this->record,
+                            'Ticket #'.$this->record->id.' cerrado',
+                            'El ticket "'.$this->record->subject.'" ha sido cerrado por el cliente.'
+                        ));
+                    }
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Ticket cerrado exitosamente')
+                        ->success()
+                        ->send();
+                }),
+
+            // Acción para reabrir ticket
+            Actions\Action::make('reopen_ticket')
+                ->label('Reabrir Ticket')
+                ->icon('heroicon-o-lock-open')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Reabrir Ticket')
+                ->modalDescription('¿Estás seguro de que quieres reabrir este ticket?')
+                ->modalSubmitActionLabel('Sí, reabrir ticket')
+                ->visible(function (): bool {
+                    return auth()->id() === $this->record->user_id
+                        && $this->record->status->name === 'Cerrado';
+                })
+                ->action(function () {
+                    $completedStatus = TicketStatus::where('name', 'Completado')->first();
+                    $this->record->update(['status_id' => $completedStatus->id]);
+
+                    if ($this->record->agent) {
+                        $this->record->agent->notify(new TicketAlert(
+                            $this->record,
+                            'Ticket #'.$this->record->id.' reabierto',
+                            'El ticket "'.$this->record->subject.'" ha sido reabierto por el cliente.'
+                        ));
+                    }
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Ticket reabierto exitosamente')
+                        ->success()
+                        ->send();
+                }),
+        ];
+    }
 
     public function infolist(Infolist $infolist): Infolist
     {

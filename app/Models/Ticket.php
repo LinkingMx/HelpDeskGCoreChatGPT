@@ -33,8 +33,13 @@ class Ticket extends Model
     protected static function booted(): void
     {
         static::creating(function ($ticket) {
+            // Asignar estado "Iniciado" por defecto si no se especifica
+            if (! $ticket->status_id) {
+                $ticket->status_id = 1; // ID del estado "Iniciado"
+            }
+
             // Set department_id based on agent's department when it's missing
-            if (empty($ticket->department_id) && !empty($ticket->agent_id)) {
+            if (empty($ticket->department_id) && ! empty($ticket->agent_id)) {
                 $agent = User::find($ticket->agent_id);
                 if ($agent && $agent->department_id) {
                     $ticket->department_id = $agent->department_id;
