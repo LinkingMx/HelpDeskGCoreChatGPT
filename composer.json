@@ -8,12 +8,15 @@
     "require": {
         "php": "^8.2",
         "bezhansalleh/filament-shield": "^3.3",
+        "blade-ui-kit/blade-icons": "^1.8",
+        "codeat3/blade-simple-icons": "^7.1",
         "filament/filament": "^3.3",
         "filament/infolists": "^3.3",
         "laravel-notification-channels/webpush": "^10.2",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "noxoua/filament-activity-log": "^2.1",
+        "secondnetwork/blade-tabler-icons": "^3.34",
         "spatie/laravel-activitylog": "^4.10",
         "z3d0x/filament-logger": "^0.8.0"
     },

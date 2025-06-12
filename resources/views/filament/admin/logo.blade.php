@@ -1,8 +1,9 @@
 <div class="flex items-center gap-2">
     <div>
-        <img src="{{ asset('images/logo.svg') }}" alt="Logo" class="h-8 w-8 rounded-full">
+        <x-si-helpdesk class="w-6 h-6" />
+
     </div>
     <div class="text-xl text-gray-900 dark:text-white">
-         GCore HelpDesk
+        GCore HelpDesk
     </div>
 </div>
