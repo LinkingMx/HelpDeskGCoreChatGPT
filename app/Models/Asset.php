@@ -19,7 +19,12 @@ class Asset extends Model
         'asset_type_id',
         'asset_status_id',
         'assigned_to',
+        'assigned_user_id',
         'client_id',
+        'brand_id',
+        'supplier',
+        'invoice_number',
+        'model',
         'purchase_date',
         'purchase_cost',
         'warranty_expires_on',
@@ -59,5 +64,21 @@ class Asset extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Get the brand that owns the asset.
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    /**
+     * Get the user assigned to this asset.
+     */
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 }

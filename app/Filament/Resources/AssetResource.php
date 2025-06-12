@@ -43,6 +43,16 @@ class AssetResource extends Resource
                             ->unique(ignoreRecord: true),
                     ])->columns(3),
 
+                Forms\Components\Section::make('Detalles del Producto')
+                    ->schema([
+                        Forms\Components\TextInput::make('model')
+                            ->label('Modelo'),
+                        Forms\Components\TextInput::make('supplier')
+                            ->label('Proveedor'),
+                        Forms\Components\TextInput::make('invoice_number')
+                            ->label('Número de Factura'),
+                    ])->columns(3),
+
                 Forms\Components\Section::make('Clasificación')
                     ->schema([
                         Forms\Components\Select::make('asset_type_id')
@@ -51,6 +61,17 @@ class AssetResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
+                        Forms\Components\Select::make('brand_id')
+                            ->label('Marca')
+                            ->relationship('brand', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nombre de la Marca')
+                                    ->required()
+                                    ->unique(),
+                            ]),
                         Forms\Components\Select::make('asset_status_id')
                             ->label('Estado')
                             ->relationship('assetStatus', 'name')
@@ -62,13 +83,20 @@ class AssetResource extends Resource
                             ->relationship('client', 'name')
                             ->searchable()
                             ->preload(),
-                    ])->columns(3),
+                    ])->columns(2),
 
                 Forms\Components\Section::make('Asignación')
                     ->schema([
+                        Forms\Components\Select::make('assigned_user_id')
+                            ->label('Asignado a (Usuario)')
+                            ->relationship('assignedUser', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Seleccionar usuario...'),
                         Forms\Components\TextInput::make('assigned_to')
-                            ->label('Asignado a'),
-                    ])->columns(1),
+                            ->label('Asignado a (Texto libre)')
+                            ->helperText('Use este campo si el responsable no está registrado como usuario del sistema'),
+                    ])->columns(2),
 
                 Forms\Components\Section::make('Información Financiera')
                     ->schema([
@@ -102,8 +130,16 @@ class AssetResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('model')
+                    ->label('Modelo')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('assetType.name')
                     ->label('Tipo')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('brand.name')
+                    ->label('Marca')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('assetStatus.name')
                     ->label('Estado')
@@ -112,20 +148,35 @@ class AssetResource extends Resource
                     ->label('Ubicación')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('assignedUser.name')
+                    ->label('Asignado a (Usuario)')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('assigned_to')
-                    ->label('Asignado a')
-                    ->searchable(),
+                    ->label('Asignado a (Texto)')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('supplier')
+                    ->label('Proveedor')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('asset_type_id')
                     ->label('Tipo')
                     ->relationship('assetType', 'name'),
+                Tables\Filters\SelectFilter::make('brand_id')
+                    ->label('Marca')
+                    ->relationship('brand', 'name'),
                 Tables\Filters\SelectFilter::make('asset_status_id')
                     ->label('Estado')
                     ->relationship('assetStatus', 'name'),
                 Tables\Filters\SelectFilter::make('client_id')
                     ->label('Ubicación')
                     ->relationship('client', 'name'),
+                Tables\Filters\SelectFilter::make('assigned_user_id')
+                    ->label('Asignado a (Usuario)')
+                    ->relationship('assignedUser', 'name'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -167,8 +218,11 @@ class AssetResource extends Resource
     {
         return [
             'Etiqueta' => $record->asset_tag,
+            'Modelo' => $record->model,
             'Tipo' => $record->assetType?->name,
+            'Marca' => $record->brand?->name,
             'Estado' => $record->assetStatus?->name,
+            'Asignado a' => $record->assignedUser?->name ?: $record->assigned_to,
         ];
     }
 }

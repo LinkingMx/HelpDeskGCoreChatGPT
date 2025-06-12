@@ -13,7 +13,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'position',
         'client_id',
         'department_id',
     ];
@@ -53,8 +54,6 @@ class User extends Authenticatable
 
     /**
      * Get the client that the user belongs to.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function client(): BelongsTo
     {
@@ -63,8 +62,6 @@ class User extends Authenticatable
 
     /**
      * Get the department that the user belongs to.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function department(): BelongsTo
     {
@@ -73,8 +70,6 @@ class User extends Authenticatable
 
     /**
      * Get the tickets created by the user.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function tickets(): HasMany
     {
@@ -83,8 +78,6 @@ class User extends Authenticatable
 
     /**
      * Get the ticket comments created by the user.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function ticketComments(): HasMany
     {

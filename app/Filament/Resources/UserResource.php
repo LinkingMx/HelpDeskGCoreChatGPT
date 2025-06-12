@@ -28,60 +28,68 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nombre')
-                    ->required()
-                    ->maxLength(255)
-                    ->columnSpan(1),
+                Forms\Components\Section::make('Información Personal')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nombre')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email')
+                            ->email()
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true),
+                    ])->columns(2),
 
-                Forms\Components\TextInput::make('email')
-                    ->label('Email')
-                    ->email()
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->columnSpan(1),
+                Forms\Components\Section::make('Información Laboral')
+                    ->schema([
+                        Forms\Components\TextInput::make('position')
+                            ->label('Puesto')
+                            ->maxLength(255)
+                            ->placeholder('Ej: Desarrollador, Gerente, Analista...'),
+                        Forms\Components\TextInput::make('password')
+                            ->label('Contraseña')
+                            ->password()
+                            ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->dehydrateStateUsing(fn ($state) => bcrypt($state))
+                            ->placeholder(fn ($livewire) => $livewire instanceof Pages\EditUser
+                                ? 'Deja en blanco para mantener la contraseña actual'
+                                : 'Ingresa una contraseña segura')
+                            ->helperText(fn ($livewire) => $livewire instanceof Pages\EditUser
+                                ? '🔐 Solo completa este campo si deseas cambiar la contraseña'
+                                : '🔐 Mínimo 8 caracteres, incluye letras y números'),
+                    ])->columns(2),
 
-                Forms\Components\TextInput::make('password')
-                    ->label('Contraseña')
-                    ->password()
-                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->dehydrateStateUsing(fn ($state) => bcrypt($state))
-                    ->placeholder(fn ($livewire) => $livewire instanceof Pages\EditUser
-                        ? 'Deja en blanco para mantener la contraseña actual'
-                        : 'Ingresa una contraseña segura')
-                    ->helperText(fn ($livewire) => $livewire instanceof Pages\EditUser
-                        ? '🔐 Solo completa este campo si deseas cambiar la contraseña'
-                        : '🔐 Mínimo 8 caracteres, incluye letras y números')
-                    ->columnSpanFull(),
+                Forms\Components\Section::make('Asignaciones')
+                    ->schema([
+                        Forms\Components\Select::make('client_id')
+                            ->label('Cliente')
+                            ->relationship('client', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Seleccionar cliente (opcional)'),
+                        Forms\Components\Select::make('department_id')
+                            ->label('Departamento')
+                            ->relationship('department', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Seleccionar departamento (opcional)'),
+                    ])->columns(2),
 
-                Forms\Components\Select::make('roles')
-                    ->label('Roles')
-                    ->multiple()
-                    ->relationship('roles', 'name')
-                    ->preload()
-                    ->required()
-                    ->columnSpanFull()
-                    ->live(),
-
-                Forms\Components\Select::make('client_id')
-                    ->label('Cliente')
-                    ->relationship('client', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('Seleccionar cliente (opcional)')
-                    ->columnSpanFull(),
-
-                Forms\Components\Select::make('department_id')
-                    ->label('Departamento')
-                    ->relationship('department', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('Seleccionar departamento (opcional)')
-                    ->columnSpanFull(),
-            ])
-            ->columns(2);
+                Forms\Components\Section::make('Permisos')
+                    ->schema([
+                        Forms\Components\Select::make('roles')
+                            ->label('Roles')
+                            ->multiple()
+                            ->relationship('roles', 'name')
+                            ->preload()
+                            ->required()
+                            ->columnSpanFull()
+                            ->live(),
+                    ]),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -95,6 +103,11 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable(),
+
+                Tables\Columns\TextColumn::make('position')
+                    ->label('Puesto')
+                    ->searchable()
+                    ->placeholder('No especificado'),
 
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
