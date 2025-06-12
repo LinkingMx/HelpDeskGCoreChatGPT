@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -64,23 +63,17 @@ class UserResource extends Resource
                 Forms\Components\Select::make('client_id')
                     ->label('Cliente')
                     ->relationship('client', 'name')
-                    ->required(fn (Forms\Get $get): bool => collect($get('roles'))->contains(fn ($roleId) => Role::find($roleId)?->name === 'user'
-                    )
-                    )
-                    ->visible(fn (Forms\Get $get): bool => collect($get('roles'))->contains(fn ($roleId) => Role::find($roleId)?->name === 'user'
-                    )
-                    )
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('Seleccionar cliente (opcional)')
                     ->columnSpanFull(),
 
                 Forms\Components\Select::make('department_id')
                     ->label('Departamento')
                     ->relationship('department', 'name')
-                    ->required(fn (Forms\Get $get): bool => collect($get('roles'))->contains(fn ($roleId) => Role::find($roleId)?->name === 'agent'
-                    )
-                    )
-                    ->visible(fn (Forms\Get $get): bool => collect($get('roles'))->contains(fn ($roleId) => Role::find($roleId)?->name === 'agent'
-                    )
-                    )
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('Seleccionar departamento (opcional)')
                     ->columnSpanFull(),
             ])
             ->columns(2);
@@ -164,6 +157,4 @@ class UserResource extends Resource
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
-
-    // test
 }
