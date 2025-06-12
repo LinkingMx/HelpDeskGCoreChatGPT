@@ -2,8 +2,8 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                // Pages\Dashboard::class, // Dashboard oculto
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -61,6 +61,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->databaseNotifications()
+            ->databaseNotificationsPolling('3s')
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
@@ -68,8 +69,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->resources([
-                config('filament-logger.activity_resource')
-            ])
-            ;
+                config('filament-logger.activity_resource'),
+            ]);
     }
 }
