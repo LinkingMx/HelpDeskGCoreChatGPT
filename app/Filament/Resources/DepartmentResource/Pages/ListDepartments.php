@@ -10,10 +10,15 @@ class ListDepartments extends ListRecords
 {
     protected static string $resource = DepartmentResource::class;
 
+    protected static ?string $title = 'Departamentos de Soporte';
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Crear Departamento')
+                ->icon('heroicon-o-plus-circle')
+                ->color('primary'),
         ];
     }
 }

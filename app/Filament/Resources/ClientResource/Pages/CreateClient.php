@@ -3,13 +3,21 @@
 namespace App\Filament\Resources\ClientResource\Pages;
 
 use App\Filament\Resources\ClientResource;
-use Filament\Actions;
-use Filament\Resources\Pages\CreateRecord;
-use Filament\Notifications\Notification; // Import Notification class
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord; // Import Notification class
 
 class CreateClient extends CreateRecord
 {
     protected static string $resource = ClientResource::class;
+
+    protected static ?string $title = 'Registrar Nuevo Cliente';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            //
+        ];
+    }
 
     // Add redirect URL method
     protected function getRedirectUrl(): string
@@ -23,7 +31,8 @@ class CreateClient extends CreateRecord
         return Notification::make()
             ->success()
             ->icon('heroicon-o-check-circle')
-            ->title('Cliente Creado')
-            ->body("El cliente '{$this->record->name}' ha sido creado exitosamente.");
+            ->title('🎉 ¡Cliente Registrado Exitosamente!')
+            ->body("El cliente '{$this->record->name}' ha sido registrado correctamente y ya puede comenzar a utilizar el sistema de soporte.")
+            ->duration(5000);
     }
 }

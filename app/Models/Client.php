@@ -26,9 +26,51 @@ class Client extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Boot the model and set default values for nullable fields.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($client) {
+            // Set default empty values for nullable fields if they're not provided
+            if (empty($client->contact_name)) {
+                $client->contact_name = '';
+            }
+            if (empty($client->contact_email)) {
+                $client->contact_email = '';
+            }
+            if (empty($client->contact_phone)) {
+                $client->contact_phone = '';
+            }
+        });
+
+        static::updating(function ($client) {
+            // Handle updates as well
+            if (is_null($client->contact_name)) {
+                $client->contact_name = '';
+            }
+            if (is_null($client->contact_email)) {
+                $client->contact_email = '';
+            }
+            if (is_null($client->contact_phone)) {
+                $client->contact_phone = '';
+            }
+        });
+    }
+
+    /**
      * Get the users associated with this client.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function users(): HasMany
     {
@@ -37,8 +79,6 @@ class Client extends Model
 
     /**
      * Get the tickets associated with this client.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function tickets(): HasMany
     {

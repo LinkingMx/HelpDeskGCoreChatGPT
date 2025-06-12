@@ -23,8 +23,6 @@ class Department extends Model
 
     /**
      * Get the users associated with this department.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function users(): HasMany
     {
@@ -33,11 +31,17 @@ class Department extends Model
 
     /**
      * Get the ticket categories for the department.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function categories(): HasMany
     {
         return $this->hasMany(TicketCategory::class);
+    }
+
+    /**
+     * Get the tickets assigned to this department.
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
     }
 }
