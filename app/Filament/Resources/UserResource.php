@@ -48,7 +48,12 @@ class UserResource extends Resource
                     ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
                     ->dehydrated(fn ($state) => filled($state))
                     ->dehydrateStateUsing(fn ($state) => bcrypt($state))
-                    ->visible(fn ($livewire) => $livewire instanceof Pages\CreateUser)
+                    ->placeholder(fn ($livewire) => $livewire instanceof Pages\EditUser
+                        ? 'Deja en blanco para mantener la contraseña actual'
+                        : 'Ingresa una contraseña segura')
+                    ->helperText(fn ($livewire) => $livewire instanceof Pages\EditUser
+                        ? '🔐 Solo completa este campo si deseas cambiar la contraseña'
+                        : '🔐 Mínimo 8 caracteres, incluye letras y números')
                     ->columnSpanFull(),
 
                 Forms\Components\Select::make('roles')

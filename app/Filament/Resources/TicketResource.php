@@ -39,29 +39,33 @@ class TicketResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-
         $user = auth()->user();
 
-        // super_admin & admin: no restrictions
-        if ($user->hasRole(['super_admin', 'admin'])) {
+        // 1. super_admin: can see all tickets without exception
+        if ($user->hasRole('super_admin')) {
             return $query;
         }
 
-        // agent: show tickets assigned to them or in their department
+        // 2. agent: can see tickets from their assigned department
         if ($user->hasRole('agent')) {
-            return $query->where(function ($query) use ($user) {
-                return $query->where('agent_id', $user->id)
-                    ->orWhere('department_id', $user->department_id);
-            });
+            if ($user->department_id) {
+                return $query->where('department_id', $user->department_id);
+            }
+
+            return $query->whereRaw('1 = 0'); // No department = no tickets
         }
 
-        // user role: show only tickets for their client
+        // 3. user role: can see tickets from their assigned client
         if ($user->hasRole('user')) {
-            return $query->where('client_id', $user->client_id);
+            if ($user->client_id) {
+                return $query->where('client_id', $user->client_id);
+            }
+
+            return $query->whereRaw('1 = 0'); // No client = no tickets
         }
 
-        // regular user: show only their tickets
-        return $query->where('user_id', $user->id);
+        // default: no access to tickets
+        return $query->whereRaw('1 = 0');
     }
 
     public static function form(Form $form): Form
