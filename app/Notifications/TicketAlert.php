@@ -25,9 +25,26 @@ class TicketAlert extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
+            ->from('notificaciones@grupocosteno.com', 'GCore HelpDesk - Grupo Costeño')
             ->subject($this->title)
+            ->greeting('¡Hola '.$notifiable->name.'!')
             ->line($this->body)
-            ->action('Ver Ticket', url("/admin/tickets/{$this->ticket->id}"));
+            ->line('**Detalles del Ticket:**')
+            ->line('• **ID:** #'.$this->ticket->id)
+            ->line('• **Asunto:** '.$this->ticket->subject)
+            ->line('• **Cliente:** '.$this->ticket->client->name)
+            ->line('• **Departamento:** '.$this->ticket->department->name)
+            ->line('• **Estado:** '.$this->ticket->status->name)
+            ->line('• **Prioridad:** '.match ($this->ticket->priority) {
+                1 => 'Alta',
+                2 => 'Media',
+                3 => 'Baja',
+                default => 'Media'
+            })
+            ->action('Ver Ticket Completo', url("/admin/tickets/{$this->ticket->id}"))
+            ->line('Gracias por usar GCore HelpDesk.')
+            ->salutation('Saludos cordiales,')
+            ->salutation('El Equipo de Soporte de Grupo Costeño');
     }
 
     public function toDatabase($notifiable): array
