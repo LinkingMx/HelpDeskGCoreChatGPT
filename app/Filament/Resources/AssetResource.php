@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AssetResource\Pages;
+use App\Filament\Resources\AssetResource\RelationManagers;
 use App\Models\Asset;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -191,7 +192,7 @@ class AssetResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\AttachmentsRelationManager::class,
         ];
     }
 
