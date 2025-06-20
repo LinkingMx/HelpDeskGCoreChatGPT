@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Ticket;
+use App\Models\Brand;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class TicketPolicy
+class BrandPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class TicketPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_ticket');
+        return $user->can('view_any_brand');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Ticket $ticket): bool
+    public function view(User $user, Brand $brand): bool
     {
-        return $user->can('view_ticket');
+        return $user->can('view_brand');
     }
 
     /**
@@ -31,23 +31,23 @@ class TicketPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_ticket');
+        return $user->can('create_brand');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Ticket $ticket): bool
+    public function update(User $user, Brand $brand): bool
     {
-        return $user->can('update_ticket');
+        return $user->can('update_brand');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Ticket $ticket): bool
+    public function delete(User $user, Brand $brand): bool
     {
-        return $user->can('delete_ticket');
+        return $user->can('delete_brand');
     }
 
     /**
@@ -55,15 +55,15 @@ class TicketPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_ticket');
+        return $user->can('delete_any_brand');
     }
 
     /**
      * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user, Ticket $ticket): bool
+    public function forceDelete(User $user, Brand $brand): bool
     {
-        return $user->can('force_delete_ticket');
+        return $user->can('force_delete_brand');
     }
 
     /**
@@ -71,15 +71,15 @@ class TicketPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_ticket');
+        return $user->can('force_delete_any_brand');
     }
 
     /**
      * Determine whether the user can restore.
      */
-    public function restore(User $user, Ticket $ticket): bool
+    public function restore(User $user, Brand $brand): bool
     {
-        return $user->can('restore_ticket');
+        return $user->can('restore_brand');
     }
 
     /**
@@ -87,15 +87,15 @@ class TicketPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_ticket');
+        return $user->can('restore_any_brand');
     }
 
     /**
      * Determine whether the user can replicate.
      */
-    public function replicate(User $user, Ticket $ticket): bool
+    public function replicate(User $user, Brand $brand): bool
     {
-        return $user->can('replicate_ticket');
+        return $user->can('replicate_brand');
     }
 
     /**
@@ -103,6 +103,6 @@ class TicketPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_ticket');
+        return $user->can('reorder_brand');
     }
 }
