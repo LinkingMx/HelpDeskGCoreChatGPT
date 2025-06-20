@@ -98,6 +98,13 @@ class ClientResource extends Resource
                             ->maxLength(255)
                             ->suffixIcon('heroicon-o-phone')
                             ->default(''),
+
+                        Forms\Components\Textarea::make('address')
+                            ->label('Dirección')
+                            ->placeholder('Dirección completa del cliente/sucursal')
+                            ->rows(2)
+                            ->columnSpanFull()
+                            ->helperText('Campo opcional para registrar la ubicación física'),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
@@ -149,6 +156,16 @@ class ClientResource extends Resource
                     ->copyable()
                     ->placeholder('Sin teléfono')
                     ->formatStateUsing(fn ($state) => $state ?: 'Sin teléfono')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('address')
+                    ->label('Dirección')
+                    ->icon('heroicon-o-map-pin')
+                    ->searchable()
+                    ->placeholder('Sin dirección registrada')
+                    ->formatStateUsing(fn ($state) => $state ?: 'Sin dirección registrada')
+                    ->limit(50)
+                    ->tooltip(fn ($record) => $record->address)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('tickets_count')

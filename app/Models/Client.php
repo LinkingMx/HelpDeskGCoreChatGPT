@@ -22,6 +22,7 @@ class Client extends Model
         'contact_name',
         'contact_email',
         'contact_phone',
+        'address',
         'notes',
     ];
 
