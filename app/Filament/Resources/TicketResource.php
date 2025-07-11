@@ -248,13 +248,7 @@ class TicketResource extends Resource
                 Tables\Columns\TextColumn::make('status.name')
                     ->label('Estado')
                     ->badge()
-                    ->color(fn ($record) => match ($record->status->name ?? '') {
-                        'Iniciado' => 'primary',
-                        'En Proceso' => 'info',
-                        'Completado' => 'success',
-                        'Cerrado' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->color(fn ($record) => $record->status->color ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('priority')
                     ->label('Prioridad')
@@ -293,6 +287,18 @@ class TicketResource extends Resource
                     ->formatStateUsing(fn (string $state): string => date('d M Y', strtotime($state))),
             ])
             ->filters([
+                Tables\Filters\TernaryFilter::make('include_closed')
+                    ->label('Estado de Tickets')
+                    ->placeholder('Solo activos')
+                    ->trueLabel('Incluir cerrados')
+                    ->falseLabel('Solo activos')
+                    ->default(false)
+                    ->queries(
+                        true: fn (Builder $query) => $query,  // Sin filtros adicionales = todos los tickets
+                        false: fn (Builder $query) => $query->whereHas('status', fn (Builder $q) => $q->where('is_final', false)), // Solo activos
+                        blank: fn (Builder $query) => $query->whereHas('status', fn (Builder $q) => $q->where('is_final', false)), // Default: solo activos
+                    ),
+
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Estado')
                     ->relationship('status', 'name'),
@@ -406,7 +412,9 @@ class TicketResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->persistFiltersInSession()
+            ->filtersFormColumns(2);
     }
 
     public static function getRelations(): array

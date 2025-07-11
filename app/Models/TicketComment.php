@@ -39,6 +39,14 @@ class TicketComment extends Model
     }
 
     /**
+     * Get the user who authored this comment (alias for author).
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Get the attachments for this comment.
      */
     public function attachments(): HasMany

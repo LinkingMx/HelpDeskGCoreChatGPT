@@ -13,7 +13,20 @@ class ListTicketStatuses extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Nuevo Estado')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
+    }
+
+    public function getTitle(): string
+    {
+        return 'Estados de Tickets';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Gestiona los diferentes estados que pueden tener los tickets en el sistema.';
     }
 }

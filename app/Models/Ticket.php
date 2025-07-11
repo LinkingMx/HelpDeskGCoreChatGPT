@@ -59,6 +59,14 @@ class Ticket extends Model
     /**
      * Get the user who opened this ticket.
      */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the user who opened this ticket.
+     */
     public function opener(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -102,5 +110,13 @@ class Ticket extends Model
     public function comments()
     {
         return $this->hasMany(TicketComment::class);
+    }
+
+    /**
+     * Get the attachments for this ticket through comments.
+     */
+    public function attachments()
+    {
+        return $this->hasManyThrough(Attachment::class, TicketComment::class, 'ticket_id', 'ticket_comment_id');
     }
 }

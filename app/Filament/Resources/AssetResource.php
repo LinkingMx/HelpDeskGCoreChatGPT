@@ -128,8 +128,8 @@ class AssetResource extends Resource
                     ->label('Etiqueta')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                Tables\Columns\TextColumn::make('serial_number')
+                    ->label('Número de Serie')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('model')
                     ->label('Modelo')

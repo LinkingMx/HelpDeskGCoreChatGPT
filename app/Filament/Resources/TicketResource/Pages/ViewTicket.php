@@ -8,11 +8,9 @@ use App\Notifications\TicketAlert;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Infolists\Components\Livewire;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
-use Filament\Support\Enums\IconPosition;
 
 class ViewTicket extends ViewRecord
 {
@@ -91,155 +89,262 @@ class ViewTicket extends ViewRecord
     {
         return $infolist
             ->schema([
-                // Layout principal con dos columnas
-                Infolists\Components\Grid::make(3)
+                // Header del ticket rediseñado - sin borde blanco y sin título
+                Infolists\Components\Grid::make([
+                    'default' => 3,    // Por defecto: 3 columnas
+                    'md' => 4,         // Pantallas medianas: 4 columnas
+                    'lg' => 4,         // Pantallas grandes: 4 columnas
+                ])
                     ->schema([
-                        // Columna izquierda - Toda la información del ticket (2/3 del ancho)
+                        Infolists\Components\TextEntry::make('id')
+                            ->label(false)
+                            ->formatStateUsing(fn ($state) => "Ticket #$state")
+                            ->badge()
+                            ->color('gray')
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
+                            ->weight(FontWeight::Bold)
+                            ->icon('heroicon-o-ticket'),
+
+                        Infolists\Components\TextEntry::make('status.name')
+                            ->label(false)
+                            ->badge()
+                            ->color(fn ($record) => $record->status->color ?? 'gray')
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large),
+
+                        Infolists\Components\TextEntry::make('priority')
+                            ->label(false)
+                            ->badge()
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
+                            ->color(fn (int $state): string => match ($state) {
+                                1 => 'danger',
+                                2 => 'warning',
+                                3 => 'success',
+                                default => 'warning',
+                            })
+                            ->formatStateUsing(fn (int $state): string => match ($state) {
+                                1 => '🔥 Alta',
+                                2 => '⚠️ Media',
+                                3 => '✅ Baja',
+                                default => 'Media',
+                            }),
+
+                        Infolists\Components\TextEntry::make('created_at')
+                            ->label(false)
+                            ->formatStateUsing(fn ($state) => $state->diffForHumans())
+                            ->badge()
+                            ->color('success')
+                            ->icon('heroicon-o-clock'),
+                    ])
+                    ->columnSpanFull(),
+
+                // Layout principal con conversación prominente
+                Infolists\Components\Grid::make([
+                    'sm' => 1,
+                    'xl' => 5,
+                ])
+                    ->schema([
+                        // Conversación - Toma más espacio (3/5)
                         Infolists\Components\Group::make([
-                            // Encabezado del ticket
-                            Infolists\Components\Section::make()
-                                ->schema([
-                                    Infolists\Components\TextEntry::make('id')
-                                        ->label('Ticket #')
-                                        ->badge()
-                                        ->color('gray')
-                                        ->size(Infolists\Components\TextEntry\TextEntrySize::Medium),
-
-                                    Infolists\Components\TextEntry::make('subject')
-                                        ->label('Asunto')
-                                        ->weight(FontWeight::Bold)
-                                        ->size(Infolists\Components\TextEntry\TextEntrySize::Large),
+                            Infolists\Components\Section::make('Conversación del Ticket')
+                                ->description('Intercambio de mensajes en tiempo real')
+                                ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                                ->iconColor('primary')
+                                ->extraAttributes([
+                                    'class' => 'h-conversation-container',
                                 ])
-                                ->columns(2),
+                                ->schema([
+                                    Livewire::make(\App\Livewire\EnhancedTicketConversation::class, [
+                                        'ticket' => $this->record,
+                                    ]),
+                                ]),
+                        ])->columnSpan([
+                            'sm' => 1,
+                            'xl' => 3,
+                        ]),
 
-                            // Descripción
-                            Infolists\Components\Section::make('Descripción')
-                                ->icon('heroicon-o-document-text')
+                        // Información del ticket - Panel lateral (2/5)
+                        Infolists\Components\Group::make([
+                            // Resumen rápido
+                            Infolists\Components\Section::make('Resumen')
+                                ->icon('heroicon-o-clipboard-document-list')
                                 ->collapsible()
                                 ->schema([
-                                    Infolists\Components\TextEntry::make('description')
-                                        ->html()
-                                        ->prose()
-                                        ->extraAttributes([
-                                            'class' => 'p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700',
-                                        ]),
-                                ]),
-
-                            // Información principal del ticket
-                            Infolists\Components\Section::make('Detalles')
-                                ->description('Información detallada del ticket')
-                                ->schema([
-                                    Infolists\Components\TextEntry::make('status.name')
-                                        ->label('Estado')
-                                        ->badge()
-                                        ->color(fn ($record) => $record->status->badge_color ?? 'gray')
-                                        ->icon('heroicon-o-check-circle'),
-
-                                    Infolists\Components\TextEntry::make('priority')
-                                        ->label('Prioridad')
-                                        ->badge()
-                                        ->color(fn (int $state): string => match ($state) {
-                                            1 => 'danger',
-                                            2 => 'warning',
-                                            3 => 'success',
-                                            default => 'warning',
-                                        })
-                                        ->formatStateUsing(fn (int $state): string => match ($state) {
-                                            1 => 'Alta',
-                                            2 => 'Media',
-                                            3 => 'Baja',
-                                            default => 'Media',
-                                        })
-                                        ->icon('heroicon-o-flag'),
-
-                                    Infolists\Components\TextEntry::make('department.name')
-                                        ->label('Departamento')
-                                        ->badge()
-                                        ->color('primary')
-                                        ->icon('heroicon-o-building-office'),
-
-                                    Infolists\Components\TextEntry::make('created_at')
-                                        ->label('Fecha de creación')
-                                        ->date('d M Y, H:i')
-                                        ->icon('heroicon-o-calendar'),
-                                ])
-                                ->columns(2),
-
-                            // Sección de cliente y asignación
-                            Infolists\Components\Grid::make(2)
-                                ->schema([
-                                    Infolists\Components\Section::make('Cliente')
-                                        ->icon('heroicon-o-users')
-                                        ->iconColor('primary')
+                                    Infolists\Components\Grid::make(1)
                                         ->schema([
-                                            Infolists\Components\TextEntry::make('client.name')
-                                                ->label('Nombre')
-                                                ->weight(FontWeight::Medium),
+                                            Infolists\Components\TextEntry::make('department.name')
+                                                ->label('Departamento')
+                                                ->badge()
+                                                ->color('primary')
+                                                ->icon('heroicon-o-building-office'),
 
-                                            Infolists\Components\TextEntry::make('client.contact_email')
-                                                ->label('Email')
-                                                ->icon('heroicon-o-envelope')
-                                                ->iconPosition(IconPosition::Before),
+                                            Infolists\Components\TextEntry::make('category.name')
+                                                ->label('Categoría')
+                                                ->badge()
+                                                ->color(fn ($record) => $record->category->color ?? 'secondary')
+                                                ->icon('heroicon-o-tag'),
 
-                                            Infolists\Components\TextEntry::make('client.contact_phone')
-                                                ->label('Teléfono')
-                                                ->icon('heroicon-o-phone')
-                                                ->iconPosition(IconPosition::Before),
-                                        ]),
-
-                                    Infolists\Components\Section::make('Asignación')
-                                        ->icon('heroicon-o-user')
-                                        ->iconColor('success')
-                                        ->schema([
                                             Infolists\Components\TextEntry::make('agent.name')
                                                 ->label('Agente asignado')
                                                 ->placeholder('Sin asignar')
-                                                ->weight(FontWeight::Medium),
-
-                                            Infolists\Components\TextEntry::make('agent.email')
-                                                ->label('Email')
-                                                ->placeholder('N/A')
-                                                ->icon('heroicon-o-envelope')
-                                                ->iconPosition(IconPosition::Before),
+                                                ->weight(FontWeight::Bold)
+                                                ->color('success'),
                                         ]),
                                 ]),
 
-                            // Timeline
-                            Section::make('Timeline')
-                                ->icon('heroicon-o-clock')
-                                ->iconColor('info')
+                            // Descripción del problema
+                            Infolists\Components\Section::make('Descripción del Problema')
+                                ->icon('heroicon-o-document-text')
                                 ->collapsible()
-                                ->collapsed(false)
+                                ->collapsed()
+                                ->schema([
+                                    Infolists\Components\TextEntry::make('description')
+                                        ->label(false)
+                                        ->html()
+                                        ->prose()
+                                        ->extraAttributes([
+                                            'class' => 'p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border-l-4 border-blue-400 shadow-sm text-sm max-h-48 overflow-y-auto',
+                                        ]),
+                                ]),
+
+                            // Participantes
+                            Infolists\Components\Section::make('Participantes')
+                                ->icon('heroicon-o-users')
+                                ->collapsible()
+                                ->collapsed()
+                                ->schema([
+                                    Infolists\Components\Group::make([
+                                        Infolists\Components\TextEntry::make('client.name')
+                                            ->label('Cliente')
+                                            ->weight(FontWeight::Bold)
+                                            ->icon('heroicon-o-user')
+                                            ->color('primary'),
+
+                                        Infolists\Components\TextEntry::make('client.contact_email')
+                                            ->label('Email')
+                                            ->icon('heroicon-o-envelope')
+                                            ->copyable()
+                                            ->copyMessage('Email copiado'),
+
+                                        Infolists\Components\TextEntry::make('client.contact_phone')
+                                            ->label('Teléfono')
+                                            ->icon('heroicon-o-phone')
+                                            ->copyable()
+                                            ->copyMessage('Teléfono copiado'),
+                                    ]),
+                                ]),
+
+                            // Métricas y SLA
+                            Infolists\Components\Section::make('Métricas SLA')
+                                ->icon('heroicon-o-chart-bar')
+                                ->collapsible()
+                                ->collapsed()
+                                ->schema([
+                                    Infolists\Components\Grid::make(1)
+                                        ->schema([
+                                            Infolists\Components\TextEntry::make('sla_status')
+                                                ->label('Estado SLA')
+                                                ->formatStateUsing(function ($record) {
+                                                    if (! $record->category || ! $record->category->time) {
+                                                        return '⚡ Sin SLA definido';
+                                                    }
+
+                                                    $sla = (int) $record->category->time; // Horas de SLA
+                                                    $elapsed = $record->created_at->diffInHours(now()); // Horas transcurridas
+
+                                                    if ($elapsed < $sla) {
+                                                        return "✅ En tiempo ({$elapsed}h / {$sla}h)";
+                                                    } elseif ($elapsed < $sla * 1.5) {
+                                                        return "⚠️ Atención ({$elapsed}h / {$sla}h)";
+                                                    } else {
+                                                        return "❌ Excedido ({$elapsed}h / {$sla}h)";
+                                                    }
+                                                })
+                                                ->badge()
+                                                ->color(function ($record) {
+                                                    if (! $record->category || ! $record->category->time) {
+                                                        return 'gray';
+                                                    }
+
+                                                    $sla = (int) $record->category->time;
+                                                    $elapsed = $record->created_at->diffInHours(now());
+
+                                                    if ($elapsed < $sla) {
+                                                        return 'success';
+                                                    } elseif ($elapsed < $sla * 1.5) {
+                                                        return 'warning';
+                                                    } else {
+                                                        return 'danger';
+                                                    }
+                                                }),
+
+                                            Infolists\Components\TextEntry::make('sla_remaining')
+                                                ->label('Tiempo restante SLA')
+                                                ->formatStateUsing(function ($record) {
+                                                    if (! $record->category || ! $record->category->time) {
+                                                        return 'N/A';
+                                                    }
+
+                                                    $sla = (int) $record->category->time;
+                                                    $elapsed = $record->created_at->diffInHours(now());
+                                                    $remaining = max(0, $sla - $elapsed);
+
+                                                    if ($remaining > 0) {
+                                                        return "{$remaining} horas restantes";
+                                                    } else {
+                                                        $overdue = $elapsed - $sla;
+
+                                                        return "Excedido por {$overdue} horas";
+                                                    }
+                                                })
+                                                ->icon('heroicon-o-clock')
+                                                ->color('info'),
+
+                                            Infolists\Components\TextEntry::make('time_elapsed')
+                                                ->label('Tiempo activo')
+                                                ->formatStateUsing(fn ($record) => $record->created_at->diffForHumans())
+                                                ->icon('heroicon-o-calendar')
+                                                ->color('gray'),
+
+                                            Infolists\Components\TextEntry::make('comments_count')
+                                                ->label('Interacciones')
+                                                ->formatStateUsing(fn ($record) => $record->comments()->count().' mensajes')
+                                                ->badge()
+                                                ->color('info')
+                                                ->icon('heroicon-o-chat-bubble-left-right'),
+                                        ]),
+                                ]),
+
+                            // Actividad reciente
+                            Infolists\Components\Section::make('Actividad Reciente')
+                                ->icon('heroicon-o-clock')
+                                ->collapsible()
+                                ->collapsed()
                                 ->schema([
                                     Livewire::make(\App\Livewire\TicketTimeline::class, [
                                         'ticket' => $this->record,
                                     ]),
                                 ]),
-                        ])->columnSpan(2),
 
-                        // Columna derecha - Conversación completa (1/3 del ancho)
-                        Infolists\Components\Group::make([
-                            // Conversación - Ocupa todo el espacio vertical
-                            Infolists\Components\Section::make('Conversación')
-                                ->icon('heroicon-o-chat-bubble-left-right')
-                                ->iconColor('warning')
-                                ->collapsible()
-                                ->collapsed(false)
-                                ->extraAttributes([
-                                    'class' => 'h-screen sticky top-0',
-                                    'style' => 'min-height: 80vh; max-height: 90vh;',
-                                ])
-                                ->schema([
-                                    Infolists\Components\ViewEntry::make('conversation')
-                                        ->view('filament.resources.ticket-resource.pages.ticket-conversation')
-                                        ->extraAttributes([
-                                            'class' => 'overflow-y-auto',
-                                            'style' => 'max-height: 75vh;',
-                                        ]),
-                                ]),
-                        ])->columnSpan(1),
+                        ])->columnSpan([
+                            'sm' => 1,
+                            'xl' => 2,
+                        ]),
                     ])
                     ->columnSpanFull(),
+            ])
+            ->extraAttributes([
+                'style' => '
+                    .h-conversation-container { 
+                        height: calc(100vh - 12rem); 
+                        min-height: 600px; 
+                    }
+                    @media (max-width: 1279px) {
+                        .h-conversation-container { 
+                            height: auto; 
+                            min-height: 500px; 
+                        }
+                    }
+                ',
             ]);
     }
 }
