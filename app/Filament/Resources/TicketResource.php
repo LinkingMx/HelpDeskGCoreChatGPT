@@ -55,13 +55,9 @@ class TicketResource extends Resource
             return $query->whereRaw('1 = 0'); // No department = no tickets
         }
 
-        // 3. user role: can see tickets from their assigned client
+        // 3. user role: can see only their own tickets
         if ($user->hasRole('user')) {
-            if ($user->client_id) {
-                return $query->where('client_id', $user->client_id);
-            }
-
-            return $query->whereRaw('1 = 0'); // No client = no tickets
+            return $query->where('user_id', $user->id);
         }
 
         // default: no access to tickets
@@ -180,7 +176,8 @@ class TicketResource extends Resource
                     ->columnSpan(1),
                 /* … dentro de ->schema([...]) … */
                 Forms\Components\Hidden::make('user_id')
-                    ->default(fn () => auth()->id()),
+                    ->default(fn () => auth()->id())
+                    ->dehydrated(true),
             ])
             ->columns(2);
     }
