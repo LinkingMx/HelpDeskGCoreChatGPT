@@ -27,7 +27,7 @@ class EnhancedTicketConversation extends Component
 
     protected $rules = [
         'comment' => 'required|string|min:3|max:2000',
-        'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx,txt,zip',
+        'attachments.*' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,pdf,doc,docx,txt,zip',
     ];
 
     protected $validationAttributes = [
@@ -41,6 +41,13 @@ class EnhancedTicketConversation extends Component
     {
         $this->ticket = $ticket;
         $this->lastCommentId = $ticket->comments()->latest()->first()?->id;
+    }
+
+    public function updatedAttachments()
+    {
+        $this->validate([
+            'attachments.*' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,pdf,doc,docx,txt,zip',
+        ]);
     }
 
     public function updatedComment()
@@ -62,13 +69,34 @@ class EnhancedTicketConversation extends Component
             // Handle attachments if any
             foreach ($this->attachments as $attachment) {
                 if ($attachment) {
-                    $path = $attachment->store('ticket-attachments', 'public');
-                    $comment->attachments()->create([
-                        'path' => $path,
-                        'name' => $attachment->getClientOriginalName(),
-                        'mime_type' => $attachment->getMimeType(),
-                        'size' => $attachment->getSize(),
-                    ]);
+                    try {
+                        $path = $attachment->store('ticket-attachments', 'public');
+                        $comment->attachments()->create([
+                            'ticket_comment_id' => $comment->id,
+                            'path' => $path,
+                            'original_name' => $attachment->getClientOriginalName(),
+                            'mime' => $attachment->getMimeType(),
+                            'size' => $attachment->getSize(),
+                        ]);
+                    } catch (\Exception $attachmentError) {
+                        // If attachment fails, still show success for the comment
+                        \Log::error('Attachment upload failed: ' . $attachmentError->getMessage());
+                        
+                        Notification::make()
+                            ->title('⚠️ Comentario enviado')
+                            ->body('El comentario se publicó, pero hubo un problema con el archivo adjunto.')
+                            ->warning()
+                            ->duration(5000)
+                            ->send();
+                        
+                        // Reset form and return early
+                        $this->reset('comment', 'attachments', 'showAttachmentPreview');
+                        $this->isTyping = false;
+                        $this->ticket->refresh();
+                        $this->lastCommentId = $comment->id;
+                        $this->dispatch('comment-added');
+                        return;
+                    }
                 }
             }
 
@@ -92,6 +120,8 @@ class EnhancedTicketConversation extends Component
                 ->send();
 
         } catch (\Exception $e) {
+            \Log::error('Comment creation failed: ' . $e->getMessage());
+            
             Notification::make()
                 ->title('❌ Error al enviar')
                 ->body('No se pudo publicar el comentario. Inténtalo de nuevo.')

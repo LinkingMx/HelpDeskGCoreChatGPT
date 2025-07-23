@@ -15,15 +15,10 @@ use Illuminate\Database\Eloquent\Model;
 class AssetResource extends Resource
 {
     protected static ?string $model = Asset::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-computer-desktop';
-
     protected static ?string $navigationGroup = 'Activos';
-
     protected static ?string $modelLabel = 'Activo';
-
     protected static ?string $pluralModelLabel = 'Activos';
-
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form

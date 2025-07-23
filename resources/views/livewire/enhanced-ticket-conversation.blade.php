@@ -167,9 +167,9 @@
                                                 group/attachment
                                             ">
                                             @php
-                                                $isImage = str_starts_with($attachment->mime_type, 'image/');
-                                                $isPdf = $attachment->mime_type === 'application/pdf';
-                                                $isDoc = in_array($attachment->mime_type, [
+                                                $isImage = str_starts_with($attachment->mime, 'image/');
+                                                $isPdf = $attachment->mime === 'application/pdf';
+                                                $isDoc = in_array($attachment->mime, [
                                                     'application/msword',
                                                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                                                 ]);
@@ -212,7 +212,7 @@
                                             <div class="flex-1 min-w-0">
                                                 <p
                                                     class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                    {{ $attachment->name }}
+                                                    {{ $attachment->original_name }}
                                                 </p>
                                                 <p class="text-xs text-gray-600 dark:text-gray-400">
                                                     {{ number_format($attachment->size / 1024, 1) }}KB
@@ -305,6 +305,11 @@
                             Adjuntar
                         </div>
                     </label>
+
+                    <!-- Texto de ayuda sobre límites de archivos -->
+                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                        Máximo 2MB por archivo
+                    </span>
 
                     <!-- Indicador de archivos seleccionados -->
                     @if (count($attachments) > 0)
