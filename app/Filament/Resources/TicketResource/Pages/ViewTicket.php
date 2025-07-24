@@ -191,6 +191,38 @@ class ViewTicket extends ViewRecord
                                         ]),
                                 ]),
 
+                            // Archivos adjuntos del ticket
+                            Infolists\Components\Section::make('Archivos Adjuntos')
+                                ->icon('heroicon-o-paper-clip')
+                                ->collapsible()
+                                ->schema([
+                                    Infolists\Components\RepeatableEntry::make('attachments')
+                                        ->label('')
+                                        ->schema([
+                                            Infolists\Components\TextEntry::make('original_name')
+                                                ->label('Archivo')
+                                                ->formatStateUsing(function ($record) {
+                                                    $size = number_format($record->size / 1024, 1);
+                                                    return $record->original_name . ' (' . $size . 'KB)';
+                                                })
+                                                ->icon('heroicon-o-document')
+                                                ->suffixActions([
+                                                    Infolists\Components\Actions\Action::make('view')
+                                                        ->icon('heroicon-o-eye')
+                                                        ->color('primary')
+                                                        ->tooltip('Ver archivo')
+                                                        ->url(fn ($record) => route('attachments.view', $record))
+                                                        ->openUrlInNewTab(),
+                                                    Infolists\Components\Actions\Action::make('download')
+                                                        ->icon('heroicon-o-arrow-down-tray')
+                                                        ->color('gray')
+                                                        ->tooltip('Descargar archivo')
+                                                        ->url(fn ($record) => route('attachments.download', $record))
+                                                ]),
+                                        ])
+                                        ->contained(false),
+                                ]),
+
                             // Descripción del problema
                             Infolists\Components\Section::make('Descripción del Problema')
                                 ->icon('heroicon-o-document-text')

@@ -159,13 +159,11 @@
                             @if ($comment->attachments->count() > 0)
                                 <div class="mt-3 space-y-2 w-full max-w-xs">
                                     @foreach ($comment->attachments as $attachment)
-                                        <a href="{{ Storage::url($attachment->path) }}" target="_blank"
-                                            class="
-                                                flex items-center p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 
-                                                rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm 
-                                                transition-all duration-200 hover:shadow-md hover:scale-[1.02]
-                                                group/attachment
-                                            ">
+                                        <div
+                                            class="flex items-center p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 
+                                                   rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm 
+                                                   transition-all duration-200 hover:shadow-md hover:scale-[1.02]
+                                                   group/attachment">
                                             @php
                                                 $isImage = str_starts_with($attachment->mime, 'image/');
                                                 $isPdf = $attachment->mime === 'application/pdf';
@@ -219,12 +217,36 @@
                                                 </p>
                                             </div>
 
-                                            <svg class="w-4 h-4 text-gray-400 group-hover/attachment:text-gray-600 dark:group-hover/attachment:text-gray-300 transition-colors"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                            </svg>
-                                        </a>
+                                            <div class="flex items-center space-x-2">
+                                                <!-- Botón Ver -->
+                                                <a href="{{ route('attachments.view', $attachment) }}" target="_blank"
+                                                    class="p-1.5 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 
+                                                          hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                                    title="Ver archivo">
+                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                </a>
+
+                                                <!-- Botón Descargar -->
+                                                <a href="{{ route('attachments.download', $attachment) }}"
+                                                    class="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 
+                                                          hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                                    title="Descargar archivo">
+                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        </div>
                                     @endforeach
                                 </div>
                             @endif

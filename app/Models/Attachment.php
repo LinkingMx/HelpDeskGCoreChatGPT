@@ -30,4 +30,12 @@ class Attachment extends Model
     {
         return $this->belongsTo(TicketComment::class);
     }
+
+    /**
+     * Get the ticket comment that this attachment belongs to (alias).
+     */
+    public function comment(): BelongsTo
+    {
+        return $this->belongsTo(TicketComment::class, 'ticket_comment_id');
+    }
 }

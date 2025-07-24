@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\TicketAlert;
 use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -113,6 +114,19 @@ class TicketResource extends Resource
                     ->label('Descripción')
                     ->required()
                     ->columnSpanFull(),
+
+                Forms\Components\FileUpload::make('attachments')
+                    ->label('Archivos Adjuntos')
+                    ->multiple()
+                    ->disk('public')
+                    ->directory('ticket-attachments')
+                    ->acceptedFileTypes(['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/zip'])
+                    ->maxSize(2048) // 2MB
+                    ->maxFiles(5)
+                    ->helperText('Máximo 5 archivos de 2MB cada uno. Formatos: imágenes, PDF, Word, texto, ZIP')
+                    ->columnSpanFull()
+                    ->hiddenOn('edit') // Solo visible en creación
+                    ->dehydrated(true), // Incluir en los datos del formulario
 
                 Forms\Components\Placeholder::make('status_info')
                     ->label('Estado')
