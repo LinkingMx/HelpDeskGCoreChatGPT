@@ -47,7 +47,7 @@ class AssetResource extends Resource
                             ->label('Proveedor'),
                         Forms\Components\TextInput::make('invoice_number')
                             ->label('Número de Factura')
-                            ->searchable(),
+                            ,
                     ])->columns(3),
 
                 Forms\Components\Section::make('Clasificación')
@@ -136,6 +136,10 @@ class AssetResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('brand.name')
                     ->label('Marca')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Número de Factura')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('assetStatus.name')
