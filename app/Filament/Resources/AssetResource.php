@@ -46,7 +46,8 @@ class AssetResource extends Resource
                         Forms\Components\TextInput::make('supplier')
                             ->label('Proveedor'),
                         Forms\Components\TextInput::make('invoice_number')
-                            ->label('Número de Factura'),
+                            ->label('Número de Factura')
+                            ->searchable(),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Clasificación')
